@@ -7,9 +7,8 @@ import (
 )
 
 type Config struct {
-	AppName string
-	AppPort string
-
+	AppName    string
+	AppPort    string
 	DBHost     string
 	DBPort     string
 	DBUser     string
