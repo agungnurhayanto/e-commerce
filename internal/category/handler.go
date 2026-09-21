@@ -1,4 +1,4 @@
-package product
+package category
 
 import (
 	"e-commerce/internal/helper"
@@ -89,9 +89,9 @@ func (h *Handler) GetByID(c *gin.Context) {
 	)
 
 	if err != nil {
-		if errors.Is(err, ErrProductNotFound) {
+		if errors.Is(err, ErrCategoryNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "product not found",
+				"error": "category not found",
 			})
 
 			return
@@ -110,7 +110,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	var req CreateProductRequest
+	var req CreateCategoryRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -155,7 +155,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	var req UpdateProductRequest
+	var req UpdateCategoryRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -178,7 +178,7 @@ func (h *Handler) Update(c *gin.Context) {
 	product, err := h.service.Update(c.Request.Context(), id.String(), req)
 	if err != nil {
 
-		if errors.Is(err, ErrProductNotFound) {
+		if errors.Is(err, ErrCategoryNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "product not found",
 			})
@@ -211,7 +211,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	err = h.service.Delete(c.Request.Context(), id.String())
 
 	if err != nil {
-		if errors.Is(err, ErrProductNotFound) {
+		if errors.Is(err, ErrCategoryNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "product not found",
 			})

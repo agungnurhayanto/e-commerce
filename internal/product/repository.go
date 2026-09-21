@@ -20,11 +20,11 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) FindAll(ctx context.Context) ([]Product, error) {
+func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Product, error) {
 	query := `
-			SELECT id, name, description, price, stock FROM products ORDER BY created_at DESC`
+			SELECT id, name, description, price, stock, category_id FROM products ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +42,7 @@ func (r *Repository) FindAll(ctx context.Context) ([]Product, error) {
 			&p.Description,
 			&p.Price,
 			&p.Stock,
+			&p.CategoryID,
 		)
 
 		if err != nil {
@@ -59,7 +60,7 @@ func (r *Repository) FindAll(ctx context.Context) ([]Product, error) {
 }
 
 func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) {
-	query := `SELECT id, name, description, price, stock FROM products WHERE id = $1`
+	query := `SELECT id, name, description, price, stock, category_id FROM products WHERE id = $1`
 
 	var p Product
 
@@ -69,6 +70,7 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) 
 		&p.Description,
 		&p.Price,
 		&p.Stock,
+		&p.CategoryID,
 	)
 
 	if err != nil {
@@ -83,7 +85,7 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) 
 }
 
 func (r *Repository) Create(ctx context.Context, req CreateProductRequest) (*Product, error) {
-	query := `INSERT INTO products(name, description, price, stock) VALUES($1, $2, $3, $4) RETURNING id,name,description,price,stock`
+	query := `INSERT INTO products(name, description, price, stock, category_id) VALUES($1, $2, $3, $4, $5) RETURNING id,name,description,price,stock,category_id`
 
 	var p Product
 
@@ -94,12 +96,14 @@ func (r *Repository) Create(ctx context.Context, req CreateProductRequest) (*Pro
 		req.Description,
 		req.Price,
 		req.Stock,
+		req.CategoryID,
 	).Scan(
 		&p.ID,
 		&p.Name,
 		&p.Description,
 		&p.Price,
 		&p.Stock,
+		&p.CategoryID,
 	)
 
 	if err != nil {

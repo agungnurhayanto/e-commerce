@@ -1,6 +1,7 @@
 package main
 
 import (
+	"e-commerce/internal/category"
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
 	"e-commerce/internal/product"
@@ -34,6 +35,15 @@ func main() {
 	// Membuat handler
 	handler := product.NewHandler(service)
 
+	// Membuat Repository Category
+	categoryRepo := category.NewRepository(pool)
+
+	// Membuat Service Category
+	categoryService := category.NewService(categoryRepo)
+
+	// Membuat Handler Category
+	categoryHandler := category.NewHandler(categoryService)
+
 	// Membuat Router Gin
 	router := gin.Default()
 
@@ -44,12 +54,19 @@ func main() {
 		})
 	})
 
-	// Endpoint mengambil semua produk
+	// Endpoint  produk
 	router.GET("/products", handler.GetAll)
 	router.GET("/products/:id", handler.GetByID)
 	router.POST("/products", handler.Create)
 	router.PUT("/products/:id", handler.Update)
 	router.DELETE("/products/:id", handler.Delete)
+
+	// Endpoint category
+	router.GET("/categories", categoryHandler.GetAll)
+	router.GET("/categories/:id", categoryHandler.GetByID)
+	router.POST("/categories", categoryHandler.Create)
+	router.PUT("/categories/:id", categoryHandler.Update)
+	router.DELETE("/categories/:id", categoryHandler.Delete)
 
 	// Menjalankan server
 	log.Println("Server running on port", cfg.AppPort)

@@ -1,4 +1,4 @@
-package product
+package category
 
 import "context"
 
@@ -12,19 +12,19 @@ func NewService(repository *Repository) *Service {
 	}
 }
 
-func (s *Service) GetAll(ctx context.Context, limit int, offset int) ([]Product, error) {
+func (s *Service) GetAll(ctx context.Context, limit int, offset int) ([]Category, error) {
 	return s.repository.FindAll(ctx, limit, offset)
 }
 
-func (s *Service) GetById(ctx context.Context, id string) (*Product, error) {
+func (s *Service) GetById(ctx context.Context, id string) (*Category, error) {
 	return s.repository.FindByID(ctx, id)
 }
 
-func (s *Service) Create(ctx context.Context, req CreateProductRequest) (*Product, error) {
+func (s *Service) Create(ctx context.Context, req CreateCategoryRequest) (*Category, error) {
 	return s.repository.Create(ctx, req)
 }
 
-func (s *Service) Update(ctx context.Context, id string, req UpdateProductRequest) (*Product, error) {
+func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryRequest) (*Category, error) {
 	return s.repository.Update(ctx, id, req)
 }
 

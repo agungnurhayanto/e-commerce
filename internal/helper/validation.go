@@ -8,7 +8,13 @@ import (
 )
 
 func ValidationErrors(err error) map[string]string {
-	validationErrors := err.(validator.ValidationErrors)
+	validationErrors, ok := err.(validator.ValidationErrors)
+
+	if !ok {
+		return map[string]string{
+			"general": "validation failed",
+		}
+	}
 
 	errors :=
 		make(map[string]string)
