@@ -29,14 +29,14 @@ func main() {
 	// Membuat Repository
 	repo := product.NewRepository(pool)
 
+	// Membuat Repository Category
+	categoryRepo := category.NewRepository(pool)
+
 	// Membuat Service
-	service := product.NewService(repo)
+	service := product.NewService(repo, categoryRepo)
 
 	// Membuat handler
 	handler := product.NewHandler(service)
-
-	// Membuat Repository Category
-	categoryRepo := category.NewRepository(pool)
 
 	// Membuat Service Category
 	categoryService := category.NewService(categoryRepo)

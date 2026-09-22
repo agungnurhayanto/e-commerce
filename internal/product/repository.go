@@ -21,8 +21,9 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Product, error) {
-	query := `
-			SELECT id, name, description, price, stock, category_id FROM products ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+
+	query := `select p.id, p.name, p.description, p.price, p.stock, p.category_id, c.name as category_name FROM products p 
+	LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.created_at DESC LIMIT $1 OFFSET $2`
 
 	rows, err := r.db.Query(ctx, query, limit, offset)
 	if err != nil {
@@ -32,6 +33,7 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Prod
 	defer rows.Close()
 
 	var products []Product
+	var categoryName *string
 
 	for rows.Next() {
 		var p Product
@@ -43,10 +45,18 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Prod
 			&p.Price,
 			&p.Stock,
 			&p.CategoryID,
+			&categoryName,
 		)
 
 		if err != nil {
 			return nil, err
+		}
+
+		if p.CategoryID != nil && categoryName != nil {
+			p.Category = &CategorySummary{
+				ID:   *p.CategoryID,
+				Name: *categoryName,
+			}
 		}
 
 		products = append(products, p)
@@ -60,9 +70,22 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Prod
 }
 
 func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) {
-	query := `SELECT id, name, description, price, stock, category_id FROM products WHERE id = $1`
+	query := `
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.category_id,
+            c.name AS category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = $1
+    `
 
 	var p Product
+	var categoryName *string
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&p.ID,
@@ -71,6 +94,7 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) 
 		&p.Price,
 		&p.Stock,
 		&p.CategoryID,
+		&categoryName,
 	)
 
 	if err != nil {
@@ -79,6 +103,13 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*Product, error) 
 		}
 
 		return nil, err
+	}
+
+	if p.CategoryID != nil && categoryName != nil {
+		p.Category = &CategorySummary{
+			ID:   *p.CategoryID,
+			Name: *categoryName,
+		}
 	}
 
 	return &p, nil
@@ -114,7 +145,7 @@ func (r *Repository) Create(ctx context.Context, req CreateProductRequest) (*Pro
 }
 
 func (r *Repository) Update(ctx context.Context, id string, req UpdateProductRequest) (*Product, error) {
-	query := `UPDATE products SET name = $1,description = $2, price = $3, stock = $4, updated_at = NOW() WHERE id = $5 RETURNING id, name, description, price, stock`
+	query := `UPDATE products SET name = $1,description = $2, price = $3, stock = $4, category_id = $5, updated_at = NOW() WHERE id = $6 RETURNING id, name, description, price, stock, category_id`
 
 	var p Product
 
@@ -125,6 +156,7 @@ func (r *Repository) Update(ctx context.Context, id string, req UpdateProductReq
 		req.Description,
 		req.Price,
 		req.Stock,
+		req.CategoryID,
 		id,
 	).Scan(
 		&p.ID,
@@ -132,6 +164,7 @@ func (r *Repository) Update(ctx context.Context, id string, req UpdateProductReq
 		&p.Description,
 		&p.Price,
 		&p.Stock,
+		&p.CategoryID,
 	)
 
 	if err != nil {

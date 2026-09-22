@@ -1,14 +1,22 @@
 package product
 
-import "context"
+import (
+	"context"
+	"e-commerce/internal/category"
+)
 
 type Service struct {
-	repository *Repository
+	repository         *Repository
+	categoryRepository *category.Repository
 }
 
-func NewService(repository *Repository) *Service {
+func NewService(
+	repository *Repository,
+	categoryRepository *category.Repository,
+) *Service {
 	return &Service{
-		repository: repository,
+		repository:         repository,
+		categoryRepository: categoryRepository,
 	}
 }
 
@@ -21,10 +29,25 @@ func (s *Service) GetById(ctx context.Context, id string) (*Product, error) {
 }
 
 func (s *Service) Create(ctx context.Context, req CreateProductRequest) (*Product, error) {
+	if req.CategoryID != nil {
+		_, err := s.categoryRepository.FindActiveByID(ctx, *req.CategoryID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repository.Create(ctx, req)
+
 }
 
 func (s *Service) Update(ctx context.Context, id string, req UpdateProductRequest) (*Product, error) {
+	if req.CategoryID != nil {
+		_, err := s.categoryRepository.FindActiveByID(ctx, *req.CategoryID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repository.Update(ctx, id, req)
 }
 

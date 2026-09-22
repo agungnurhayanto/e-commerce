@@ -1,6 +1,7 @@
 package product
 
 import (
+	"e-commerce/internal/category"
 	"e-commerce/internal/helper"
 	"errors"
 	"log"
@@ -132,6 +133,13 @@ func (h *Handler) Create(c *gin.Context) {
 
 	product, err := h.service.Create(c.Request.Context(), req)
 
+	if errors.Is(err, category.ErrCategoryNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "category not found or inactive",
+		})
+		return
+	}
+
 	if err != nil {
 		log.Println("Create error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -177,6 +185,13 @@ func (h *Handler) Update(c *gin.Context) {
 
 	product, err := h.service.Update(c.Request.Context(), id.String(), req)
 	if err != nil {
+
+		if errors.Is(err, category.ErrCategoryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "category not found or inactive",
+			})
+			return
+		}
 
 		if errors.Is(err, ErrProductNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -22,7 +23,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 
 func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Category, error) {
 	query := `
-			SELECT id, name, description FROM categories ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+			SELECT id, name, description,is_active FROM categories ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 
 	rows, err := r.db.Query(ctx, query, limit, offset)
 	if err != nil {
@@ -40,6 +41,7 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Cate
 			&c.ID,
 			&c.Name,
 			&c.Description,
+			&c.IsActive,
 		)
 
 		if err != nil {
@@ -57,7 +59,30 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]Cate
 }
 
 func (r *Repository) FindByID(ctx context.Context, id string) (*Category, error) {
-	query := `SELECT id, name, description FROM categories WHERE id = $1`
+	query := `SELECT id, name, description, is_active FROM categories WHERE id = $1`
+
+	var c Category
+
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&c.ID,
+		&c.Name,
+		&c.Description,
+		&c.IsActive,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrCategoryNotFound
+		}
+
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func (r *Repository) FindActiveByID(ctx context.Context, id uuid.UUID) (*Category, error) {
+	query := `SELECT id, name, description FROM categories WHERE id = $1 AND is_active = TRUE `
 
 	var c Category
 
@@ -130,7 +155,7 @@ func (r *Repository) Update(ctx context.Context, id string, req UpdateCategoryRe
 }
 
 func (r *Repository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM categories WHERE id=$1::uuid`
+	query := `UPDATE categories SET is_active = FALSE, updated_at = NOW() WHERE id=$1::uuid`
 
 	result, err := r.db.Exec(ctx, query, id)
 	if err != nil {
