@@ -5,6 +5,7 @@ import (
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
 	"e-commerce/internal/product"
+	"e-commerce/internal/user"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,12 @@ func main() {
 	}
 
 	defer pool.Close()
+
+	userRepo := user.NewRepository(pool)
+
+	userService := user.NewService(userRepo)
+
+	userHandler := user.NewHandler(userService)
 
 	// Membuat Repository
 	repo := product.NewRepository(pool)
@@ -53,6 +60,10 @@ func main() {
 			"status": "ok",
 		})
 	})
+
+	// Endpoint  User
+
+	router.POST("/users", userHandler.Create)
 
 	// Endpoint  produk
 	router.GET("/products", handler.GetAll)
