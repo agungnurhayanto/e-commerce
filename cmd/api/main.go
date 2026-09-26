@@ -1,6 +1,7 @@
 package main
 
 import (
+	"e-commerce/internal/auth"
 	"e-commerce/internal/category"
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
@@ -13,7 +14,7 @@ import (
 
 func main() {
 
-	// Membaca konfigurasi dari .ent
+	// Membaca konfigurasi dari .env
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
@@ -29,7 +30,8 @@ func main() {
 
 	userRepo := user.NewRepository(pool)
 
-	userService := user.NewService(userRepo)
+	userService := user.NewService(userRepo, cfg.JWTSecret,
+		cfg.JWTExpireHours)
 
 	userHandler := user.NewHandler(userService)
 
@@ -61,16 +63,23 @@ func main() {
 		})
 	})
 
-	// Endpoint  User
+	// Login Aplikasi
+	router.POST("/login", userHandler.Login)
 
+	// Endpoint  User
 	router.POST("/users", userHandler.Create)
+	router.GET("/users", userHandler.GetAll)
+	router.PUT("/users/:id", userHandler.Update)
+	router.GET("/users/:id", userHandler.GetByID)
+	router.DELETE("/users/:id", userHandler.Delete)
 
 	// Endpoint  produk
 	router.GET("/products", handler.GetAll)
 	router.GET("/products/:id", handler.GetByID)
-	router.POST("/products", handler.Create)
-	router.PUT("/products/:id", handler.Update)
-	router.DELETE("/products/:id", handler.Delete)
+
+	router.POST("/products", auth.AuthMiddleware(), handler.Create)
+	router.PUT("/products/:id", auth.AuthMiddleware(), handler.Update)
+	router.DELETE("/products/:id", auth.AuthMiddleware(), handler.Delete)
 
 	// Endpoint category
 	router.GET("/categories", categoryHandler.GetAll)
