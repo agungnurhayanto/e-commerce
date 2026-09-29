@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 
@@ -36,7 +36,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		token, err := jwt.Parse(
 			tokenString,
 			func(token *jwt.Token) (interface{}, error) {
-				return []byte("secret-key"), nil
+				return []byte(secret), nil
 			},
 		)
 
@@ -65,7 +65,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 		}
 
+		role, ok := claims["role"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "role not found in token",
+			})
+			c.Abort()
+			return
+		}
+
 		c.Set("user_id", userID)
+		c.Set("role", role)
 
 		c.Next()
 	}

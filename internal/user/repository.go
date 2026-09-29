@@ -21,7 +21,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, user CreateUserRequest) (*User, error) {
-	query := `INSERT INTO users(name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email, password`
+	query := `INSERT INTO users(name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, password, role`
 
 	var u User
 
@@ -31,11 +31,13 @@ func (r *Repository) Create(ctx context.Context, user CreateUserRequest) (*User,
 		user.Name,
 		user.Email,
 		user.Password,
+		user.Role,
 	).Scan(
 		&u.ID,
 		&u.Name,
 		&u.Email,
 		&u.Password,
+		&u.Role,
 	)
 
 	if err != nil {
@@ -151,7 +153,7 @@ func (r *Repository) Delete(ctx context.Context, id string) error {
 
 func (r *Repository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	query := `
-		SELECT id, name, email, password
+		SELECT id, name, email, password, role
 		FROM users
 		WHERE email = $1
 	`
@@ -167,6 +169,7 @@ func (r *Repository) FindByEmail(ctx context.Context, email string) (*User, erro
 		&u.Name,
 		&u.Email,
 		&u.Password,
+		&u.Role,
 	)
 
 	if err != nil {

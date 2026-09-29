@@ -24,6 +24,8 @@ func NewService(repository *Repository, jwtSecret string,
 
 func (s *Service) Create(ctx context.Context, user CreateUserRequest) (*User, error) {
 
+	user.Role = "customer"
+
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(user.Password),
 		bcrypt.DefaultCost,
@@ -83,6 +85,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
 
 	token, err := auth.GenerateToken(
 		user.ID,
+		user.Role,
 		s.jwtSecret,
 		s.jwtExpireHours,
 	)

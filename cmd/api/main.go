@@ -77,16 +77,17 @@ func main() {
 	router.GET("/products", handler.GetAll)
 	router.GET("/products/:id", handler.GetByID)
 
-	router.POST("/products", auth.AuthMiddleware(), handler.Create)
-	router.PUT("/products/:id", auth.AuthMiddleware(), handler.Update)
-	router.DELETE("/products/:id", auth.AuthMiddleware(), handler.Delete)
+	router.POST("/products", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Create)
+	router.PUT("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Update)
+	router.DELETE("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Delete)
 
 	// Endpoint category
 	router.GET("/categories", categoryHandler.GetAll)
 	router.GET("/categories/:id", categoryHandler.GetByID)
-	router.POST("/categories", categoryHandler.Create)
-	router.PUT("/categories/:id", categoryHandler.Update)
-	router.DELETE("/categories/:id", categoryHandler.Delete)
+
+	router.POST("/categories", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Create)
+	router.PUT("/categories/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Update)
+	router.DELETE("/categories/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Delete)
 
 	// Menjalankan server
 	log.Println("Server running on port", cfg.AppPort)

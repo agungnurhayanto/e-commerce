@@ -9,11 +9,13 @@ import (
 )
 
 func GenerateToken(userID uuid.UUID,
+	role string,
 	secret string,
 	expireHours int,
 ) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID.String(),
+		"role":    role,
 		"exp":     time.Now().Add(time.Duration(expireHours) * time.Hour).Unix(),
 		"iat":     time.Now().Unix(),
 	}
@@ -23,5 +25,5 @@ func GenerateToken(userID uuid.UUID,
 		claims,
 	)
 
-	return token.SignedString([]byte("secret-key"))
+	return token.SignedString([]byte(secret))
 }
