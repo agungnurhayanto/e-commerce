@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -83,8 +84,8 @@ func (r *Repository) FindAll(ctx context.Context, limit int, offset int) ([]User
 	return user, nil
 }
 
-func (r *Repository) FindByID(ctx context.Context, id string) (*User, error) {
-	query := `SELECT id, name, email, password FROM users WHERE id = $1`
+func (r *Repository) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
+	query := `SELECT id, name, email, password, role FROM users WHERE id = $1`
 
 	var u User
 
@@ -93,6 +94,7 @@ func (r *Repository) FindByID(ctx context.Context, id string) (*User, error) {
 		&u.Name,
 		&u.Email,
 		&u.Password,
+		&u.Role,
 	)
 
 	if err != nil {

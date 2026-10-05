@@ -67,11 +67,16 @@ func main() {
 	router.POST("/login", userHandler.Login)
 
 	// Endpoint  User
-	router.POST("/users", userHandler.Create)
-	router.GET("/users", userHandler.GetAll)
-	router.PUT("/users/:id", userHandler.Update)
-	router.GET("/users/:id", userHandler.GetByID)
-	router.DELETE("/users/:id", userHandler.Delete)
+	router.GET(
+		"/me",
+		auth.AuthMiddleware(cfg.JWTSecret),
+		userHandler.GetMe,
+	)
+	router.POST("/users", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Create)
+	router.GET("/users", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.GetAll)
+	router.PUT("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Update)
+	router.GET("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.GetByID)
+	router.DELETE("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Delete)
 
 	// Endpoint  produk
 	router.GET("/products", handler.GetAll)

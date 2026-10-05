@@ -22,6 +22,37 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+func (h *Handler) GetMe(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "user id not found",
+		})
+
+		return
+	}
+
+	id, err := uuid.Parse(userID.(string))
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id",
+		})
+	}
+
+	user, err := h.service.GetById(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "user not found",
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
 func (h *Handler) Create(c *gin.Context) {
 	var user CreateUserRequest
 
@@ -114,7 +145,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 
 	user, err := h.service.GetById(
 		c.Request.Context(),
-		id.String(),
+		id,
 	)
 
 	if err != nil {
@@ -144,7 +175,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid product ID",
+			"error": "invalid user ID",
 		})
 
 		return
@@ -175,7 +206,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 		if errors.Is(err, ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "product not found",
+				"error": "user not found",
 			})
 
 			return
@@ -197,7 +228,7 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid product ID",
+			"error": "invalid user ID",
 		})
 
 		return
@@ -208,7 +239,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "product not found",
+				"error": "user not found",
 			})
 			return
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"e-commerce/internal/auth"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -44,7 +45,7 @@ func (s *Service) GetAll(ctx context.Context, limit int, offset int) ([]User, er
 	return s.repository.FindAll(ctx, limit, offset)
 }
 
-func (s *Service) GetById(ctx context.Context, id string) (*User, error) {
+func (s *Service) GetById(ctx context.Context, id uuid.UUID) (*User, error) {
 	return s.repository.FindByID(ctx, id)
 }
 
