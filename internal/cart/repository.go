@@ -21,6 +21,29 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	}
 }
 
+func (r *Repository) Create(ctx context.Context, userID uuid.UUID) (*Cart, error) {
+	query := `INSERT INTO carts(user_id) VALUES($1) RETURNING id,user_id,created_at,updated_at`
+
+	var c Cart
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		userID,
+	).Scan(
+		&c.ID,
+		&c.UserID,
+		&c.CreatedAt,
+		&c.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
 func (r *Repository) FindByUserID(ctx context.Context, id uuid.UUID) (*Cart, error) {
 	query := `SELECT id, user_id, created_at, updated_at FROM carts WHERE user_id = $1`
 

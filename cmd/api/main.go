@@ -83,6 +83,7 @@ func main() {
 
 	// CART ROUTES
 	router.GET("/cart", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.GetByUserID)
+	router.POST("/cart", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.Create)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)

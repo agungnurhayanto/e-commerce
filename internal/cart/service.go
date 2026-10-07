@@ -16,6 +16,11 @@ func NewService(repository *Repository) *Service {
 	}
 }
 
+func (s *Service) Create(ctx context.Context, userID uuid.UUID) (*Cart, error) {
+	return s.repository.Create(ctx, userID)
+
+}
+
 func (s *Service) GetByUserID(ctx context.Context, id uuid.UUID) (*Cart, error) {
 	return s.repository.FindByUserID(ctx, id)
 }

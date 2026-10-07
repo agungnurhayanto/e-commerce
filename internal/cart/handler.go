@@ -19,6 +19,39 @@ func NewHandler(service *Service) *Handler {
 	}
 }
 
+func (h *Handler) Create(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "user id not found",
+		})
+
+		return
+	}
+
+	id, err := uuid.Parse(userID.(string))
+
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id",
+		})
+
+		return
+	}
+
+	cart, err := h.service.Create(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "internal server error",
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, cart)
+}
+
 func (h *Handler) GetByUserID(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 
