@@ -1,104 +1,93 @@
 package main
 
 import (
+	"log"
+
 	"e-commerce/internal/auth"
+	"e-commerce/internal/cart"
 	"e-commerce/internal/category"
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
 	"e-commerce/internal/product"
 	"e-commerce/internal/user"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 
-	// Membaca konfigurasi dari .env
+	// CONFIG & DATABASE
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Membuat Koneksi PostgreSQL
 	pool, err := database.NewPostgresPool(cfg)
 	if err != nil {
 		log.Fatal("Database connection failed:", err)
 	}
-
 	defer pool.Close()
 
+	// USER
 	userRepo := user.NewRepository(pool)
-
-	userService := user.NewService(userRepo, cfg.JWTSecret,
-		cfg.JWTExpireHours)
-
+	userService := user.NewService(userRepo, cfg.JWTSecret, cfg.JWTExpireHours)
 	userHandler := user.NewHandler(userService)
 
-	// Membuat Repository
-	repo := product.NewRepository(pool)
-
-	// Membuat Repository Category
+	// CATEGORY
 	categoryRepo := category.NewRepository(pool)
-
-	// Membuat Service
-	service := product.NewService(repo, categoryRepo)
-
-	// Membuat handler
-	handler := product.NewHandler(service)
-
-	// Membuat Service Category
 	categoryService := category.NewService(categoryRepo)
-
-	// Membuat Handler Category
 	categoryHandler := category.NewHandler(categoryService)
 
-	// Membuat Router Gin
+	// PRODUCT
+	productRepo := product.NewRepository(pool)
+	productService := product.NewService(productRepo, categoryRepo)
+	productHandler := product.NewHandler(productService)
+
+	// CART
+	cartRepo := cart.NewRepository(pool)
+	cartService := cart.NewService(cartRepo)
+	cartHandler := cart.NewHandler(cartService)
+
+	// ROUTER
 	router := gin.Default()
 
-	// Endpoint Pengecekan Aplikasi
+	// HEALTH
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "ok",
 		})
 	})
 
-	// Login Aplikasi
+	// USER ROUTES
 	router.POST("/login", userHandler.Login)
-
-	// Endpoint  User
-	router.GET(
-		"/me",
-		auth.AuthMiddleware(cfg.JWTSecret),
-		userHandler.GetMe,
-	)
+	router.GET("/me", auth.AuthMiddleware(cfg.JWTSecret), userHandler.GetMe)
 	router.POST("/users", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Create)
 	router.GET("/users", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.GetAll)
-	router.PUT("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Update)
 	router.GET("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.GetByID)
+	router.PUT("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Update)
 	router.DELETE("/users/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), userHandler.Delete)
 
-	// Endpoint  produk
-	router.GET("/products", handler.GetAll)
-	router.GET("/products/:id", handler.GetByID)
-
-	router.POST("/products", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Create)
-	router.PUT("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Update)
-	router.DELETE("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), handler.Delete)
-
-	// Endpoint category
+	// CATEGORY ROUTES
 	router.GET("/categories", categoryHandler.GetAll)
 	router.GET("/categories/:id", categoryHandler.GetByID)
-
 	router.POST("/categories", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Create)
 	router.PUT("/categories/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Update)
 	router.DELETE("/categories/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), categoryHandler.Delete)
 
-	// Menjalankan server
+	// PRODUCT ROUTES
+	router.GET("/products", productHandler.GetAll)
+	router.GET("/products/:id", productHandler.GetByID)
+	router.POST("/products", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), productHandler.Create)
+	router.PUT("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), productHandler.Update)
+	router.DELETE("/products/:id", auth.AuthMiddleware(cfg.JWTSecret), auth.RequireRole("admin"), productHandler.Delete)
+
+	// CART ROUTES
+	router.GET("/cart", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.GetByUserID)
+
+	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
 
-	err = router.Run(":" + cfg.AppPort)
-	if err != nil {
+	if err := router.Run(":" + cfg.AppPort); err != nil {
 		log.Fatal(err)
 	}
 }
