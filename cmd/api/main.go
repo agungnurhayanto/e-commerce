@@ -8,6 +8,7 @@ import (
 	"e-commerce/internal/category"
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
+	"e-commerce/internal/order"
 	"e-commerce/internal/product"
 	"e-commerce/internal/user"
 
@@ -47,6 +48,11 @@ func main() {
 	cartRepo := cart.NewRepository(pool)
 	cartService := cart.NewService(cartRepo)
 	cartHandler := cart.NewHandler(cartService)
+
+	// order
+	orderRepo := order.NewRepository(pool)
+	orderService := order.NewService(orderRepo)
+	orderHandler := order.NewHandler(orderService)
 
 	// ROUTER
 	router := gin.Default()
@@ -90,6 +96,8 @@ func main() {
 	router.GET("/cart/items", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.GetItems)
 	router.DELETE("/cart/items/:id", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.DeleteCartItem)
 	router.PUT("/cart/items/:id", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.UpdateItemQuantity)
+
+	router.POST("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.Create)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
