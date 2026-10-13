@@ -85,6 +85,12 @@ func main() {
 	router.GET("/cart", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.GetByUserID)
 	router.POST("/cart", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.Create)
 
+	// CART ITEMS ROUTES
+	router.POST("/cart/items", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.AddItem)
+	router.GET("/cart/items", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.GetItems)
+	router.DELETE("/cart/items/:id", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.DeleteCartItem)
+	router.PUT("/cart/items/:id", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.UpdateItemQuantity)
+
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
 

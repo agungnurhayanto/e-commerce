@@ -21,3 +21,12 @@ type CartItem struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type AddCartItemRequest struct {
+	ProductID uuid.UUID `json:"product_id"`
+	Quantity  int       `json:"quantity"`
+}
+
+type UpdateCartItemRequest struct {
+	Quantity int `json:"quantity" validate:"gte=1"`
+}
