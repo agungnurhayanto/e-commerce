@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -15,8 +16,42 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	// Logika checkout akan kita lengkapi setelah ini.
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"message": "Order checkout belum diimplementasikan",
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User tidak terauntetikasi"})
+
+		return
+	}
+
+	userIDString, ok := userID.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Tipe user ID tidak valid",
+		})
+		return
+	}
+
+	uid, err := uuid.Parse(userIDString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Format user ID tidak valid",
+		})
+		return
+	}
+
+	err = h.service.Create(c.Request.Context(), uid)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Gagal membuat order",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "order berhasil dibuat",
 	})
 }

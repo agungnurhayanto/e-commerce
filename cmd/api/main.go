@@ -51,7 +51,7 @@ func main() {
 
 	// order
 	orderRepo := order.NewRepository(pool)
-	orderService := order.NewService(orderRepo)
+	orderService := order.NewService(orderRepo, cartService, productService)
 	orderHandler := order.NewHandler(orderService)
 
 	// ROUTER
