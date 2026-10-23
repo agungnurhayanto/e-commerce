@@ -63,3 +63,7 @@ func (s *Service) Create(ctx context.Context, uid uuid.UUID) error {
 
 	return s.repo.Create(ctx, order)
 }
+
+func (s *Service) GetByUserID(ctx context.Context, userID uuid.UUID) ([]Order, error) {
+	return s.repo.FindByUserID(ctx, userID)
+}

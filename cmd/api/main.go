@@ -98,6 +98,7 @@ func main() {
 	router.PUT("/cart/items/:id", auth.AuthMiddleware(cfg.JWTSecret), cartHandler.UpdateItemQuantity)
 
 	router.POST("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.Create)
+	router.GET("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.GetByUserID)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)

@@ -47,7 +47,8 @@ func (h *Handler) Create(c *gin.Context) {
 	cart, err := h.service.Create(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "internal server error",
+			// "error": "internal server error",
+			"error": err.Error(),
 		})
 
 		return
