@@ -139,3 +139,93 @@ func (r *Repository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]Orde
 
 	return orders, nil
 }
+
+func (r *Repository) UpdateStatus(ctx context.Context, orderID uuid.UUID, status string) error {
+	query := `UPDATE orders set status = $1, updated_at = NOW() WHERE id= $2 AND status = 'pending'`
+
+	result, err := r.db.Exec(ctx, query, status, orderID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return errors.New("order tidak ditemukan atau status bukan pending")
+	}
+
+	return nil
+
+}
+
+func (r *Repository) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback(ctx)
+
+	// Memasikan status order masih dalam pending
+	var status string
+	err = tx.QueryRow(ctx, `SELECT status FROM orders WHERE id = $1 FOR UPDATE`, orderID).Scan(&status)
+	if err != nil {
+		return err
+	}
+
+	if status != "pending" {
+		return errors.New("order tidak bisa dibatalkan")
+	}
+
+	// ambil detail produk dalam order
+	rows, err := tx.Query(ctx, `SELECT product_id, quantity FROM order_items WHERE order_id = $1`, orderID)
+
+	if err != nil {
+		return err
+	}
+
+	type item struct {
+		ProductID uuid.UUID
+		Quantity  int
+	}
+
+	var items []item
+
+	for rows.Next() {
+		var i item
+		if err := rows.Scan(&i.ProductID, &i.Quantity); err != nil {
+			rows.Close()
+			return err
+		}
+
+		items = append(items, i)
+	}
+
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+
+	rows.Close()
+
+	// Kembalikan stok product
+
+	for _, i := range items {
+		_, err = tx.Exec(ctx, `UPDATE products SET stock = stock + $1 WHERE id = $2`,
+			i.Quantity,
+			i.ProductID)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// ubah status order menjadi cancelled
+	_, err = tx.Exec(ctx, `UPDATE orders SET status = 'cancelled', updated_at =  NOW() WHERE id = $1`, orderID)
+
+	if err != nil {
+		return err
+	}
+
+	// simpan seluruh perubahan
+	return tx.Commit(ctx)
+
+}

@@ -67,3 +67,11 @@ func (s *Service) Create(ctx context.Context, uid uuid.UUID) error {
 func (s *Service) GetByUserID(ctx context.Context, userID uuid.UUID) ([]Order, error) {
 	return s.repo.FindByUserID(ctx, userID)
 }
+
+func (s *Service) UpdateStatus(ctx context.Context, orderID uuid.UUID, status string) error {
+	if status != "paid" {
+		return errors.New("status tidak valid")
+	}
+
+	return s.repo.UpdateStatus(ctx, orderID, status)
+}

@@ -101,3 +101,43 @@ func (h *Handler) GetByUserID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, orders)
 }
+
+func (h *Handler) UpdateStatus(c *gin.Context) {
+
+	// ambil ID order dari url
+	orderID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID order tidak valid",
+		})
+
+		return
+	}
+	// Ambil status dari JSON body
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Request body tidak valid",
+		})
+
+		return
+	}
+
+	// Panggil service
+	err = h.service.UpdateStatus(c.Request.Context(), orderID, req.Status)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Status order berhasil di perbarui",
+	})
+
+}

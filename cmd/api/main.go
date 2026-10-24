@@ -99,6 +99,7 @@ func main() {
 
 	router.POST("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.Create)
 	router.GET("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.GetByUserID)
+	router.PATCH("/order/:id/status", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.UpdateStatus)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
