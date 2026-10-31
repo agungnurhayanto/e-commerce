@@ -75,3 +75,7 @@ func (s *Service) UpdateStatus(ctx context.Context, orderID uuid.UUID, status st
 
 	return s.repo.UpdateStatus(ctx, orderID, status)
 }
+
+func (s *Service) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
+	return s.repo.CancelOrder(ctx, orderID)
+}

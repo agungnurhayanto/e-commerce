@@ -141,3 +141,29 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 	})
 
 }
+
+func (h *Handler) CancelOrder(c *gin.Context) {
+	orderID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID order tidak valid",
+		})
+
+		return
+	}
+
+	err = h.service.CancelOrder(c.Request.Context(), orderID)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Status order berhasil dibatalkan",
+	})
+
+}

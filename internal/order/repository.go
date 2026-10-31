@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -163,18 +164,15 @@ func (r *Repository) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
 	}
 
 	defer tx.Rollback(ctx)
-
 	// Memasikan status order masih dalam pending
 	var status string
 	err = tx.QueryRow(ctx, `SELECT status FROM orders WHERE id = $1 FOR UPDATE`, orderID).Scan(&status)
 	if err != nil {
 		return err
 	}
-
 	if status != "pending" {
 		return errors.New("order tidak bisa dibatalkan")
 	}
-
 	// ambil detail produk dalam order
 	rows, err := tx.Query(ctx, `SELECT product_id, quantity FROM order_items WHERE order_id = $1`, orderID)
 
@@ -205,17 +203,15 @@ func (r *Repository) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
 	}
 
 	rows.Close()
-
 	// Kembalikan stok product
-
 	for _, i := range items {
 		_, err = tx.Exec(ctx, `UPDATE products SET stock = stock + $1 WHERE id = $2`,
 			i.Quantity,
 			i.ProductID)
-	}
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	// ubah status order menjadi cancelled
@@ -228,4 +224,33 @@ func (r *Repository) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
 	// simpan seluruh perubahan
 	return tx.Commit(ctx)
 
+}
+
+func (r *Repository) FindByIDAndUserID(
+	ctx context.Context,
+	orderID uuid.UUID,
+	userID uuid.UUID,
+) (*Order, error) {
+
+	query := `SELECT id, user_id, total, status, created_at, updated_at FROM orders WHERE id = $1 AND  user_id = $2 ORDER BY created_at DESC`
+
+	var o Order
+	err := r.db.QueryRow(ctx, query, orderID, userID).Scan(
+		&o.ID,
+		&o.UserID,
+		&o.Total,
+		&o.Status,
+		&o.CreatedAt,
+		&o.UpdatedAt,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrOrderNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &o, nil
 }

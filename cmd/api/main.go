@@ -100,6 +100,7 @@ func main() {
 	router.POST("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.Create)
 	router.GET("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.GetByUserID)
 	router.PATCH("/order/:id/status", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.UpdateStatus)
+	router.PATCH("/order/:id/cancel", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.CancelOrder)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
