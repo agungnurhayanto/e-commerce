@@ -21,13 +21,7 @@ func NewService(repository *Repository, orderRepo *order.Repository) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, req dto.CreatePaymentRequest) (*Payment, error) {
-
-	// 1. Ambil user_id dari context
-	userID, ok := ctx.Value("user_id").(uuid.UUID)
-	if !ok {
-		return nil, errors.New("user tidak valid")
-	}
+func (s *Service) Create(ctx context.Context, userID uuid.UUID, req dto.CreatePaymentRequest) (*Payment, error) {
 
 	// 2. Cari order berdasarkan order_id dan user_id
 	order, err := s.orderRepo.FindByIDAndUserID(ctx, req.OrderID, userID)

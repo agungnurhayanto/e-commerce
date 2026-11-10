@@ -9,6 +9,7 @@ import (
 	"e-commerce/internal/config"
 	"e-commerce/internal/database"
 	"e-commerce/internal/order"
+	"e-commerce/internal/payment"
 	"e-commerce/internal/product"
 	"e-commerce/internal/user"
 
@@ -53,6 +54,14 @@ func main() {
 	orderRepo := order.NewRepository(pool)
 	orderService := order.NewService(orderRepo, cartService, productService)
 	orderHandler := order.NewHandler(orderService)
+
+	paymentRepo := payment.NewRepository(pool)
+	paymentService := payment.NewService(
+		paymentRepo,
+		orderRepo,
+	)
+
+	paymentHandler := payment.NewHandler(paymentService)
 
 	// ROUTER
 	router := gin.Default()
@@ -101,6 +110,8 @@ func main() {
 	router.GET("/order", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.GetByUserID)
 	router.PATCH("/order/:id/status", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.UpdateStatus)
 	router.PATCH("/order/:id/cancel", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.CancelOrder)
+
+	router.POST("/payments", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.Create)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
