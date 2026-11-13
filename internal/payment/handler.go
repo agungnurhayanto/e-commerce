@@ -53,3 +53,41 @@ func (h *Handler) Create(c *gin.Context) {
 	})
 
 }
+
+func (h *Handler) Confirm(c *gin.Context) {
+	paymentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "payment ID tidak valid",
+		})
+
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("user_id"))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "uset tidak valid",
+		})
+
+		return
+	}
+
+	err = h.service.ConfirmDummyPayment(
+		c.Request.Context(),
+		paymentID,
+		userID,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "pembayaran berhasil di konfirmasi",
+	})
+}

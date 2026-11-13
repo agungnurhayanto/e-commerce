@@ -13,6 +13,8 @@ import (
 	"e-commerce/internal/product"
 	"e-commerce/internal/user"
 
+	paymentgateway "e-commerce/internal/payment/gateway"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,9 +58,13 @@ func main() {
 	orderHandler := order.NewHandler(orderService)
 
 	paymentRepo := payment.NewRepository(pool)
+
+	dummyGateway := paymentgateway.NewDummyGateway()
+
 	paymentService := payment.NewService(
 		paymentRepo,
 		orderRepo,
+		dummyGateway,
 	)
 
 	paymentHandler := payment.NewHandler(paymentService)
@@ -112,6 +118,7 @@ func main() {
 	router.PATCH("/order/:id/cancel", auth.AuthMiddleware(cfg.JWTSecret), orderHandler.CancelOrder)
 
 	router.POST("/payments", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.Create)
+	router.POST("/payments/:id/confirm", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.Confirm)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)
