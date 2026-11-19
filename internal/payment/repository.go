@@ -2,6 +2,7 @@ package payment
 
 import (
 	"context"
+	"e-commerce/internal/payment/dto"
 	"errors"
 
 	"github.com/google/uuid"
@@ -111,5 +112,56 @@ func (r *Repository) ConfirmDummyPayment(
 
 	// 6. Commit
 	return tx.Commit(ctx)
+}
+
+func (r *Repository) GetPaymentDetail(
+	ctx context.Context,
+	paymentID uuid.UUID,
+	userID uuid.UUID,
+) (*dto.PaymentResponse, error) {
+
+	var payment dto.PaymentResponse
+
+	query := `
+			SELECT
+			p.id,
+			p.order_id,
+			p.payment_method,
+			p.amount,
+			p.status,
+			p.transaction_reference,
+			p.paid_at,
+			p.created_at
+		FROM payments p
+		INNER JOIN orders o ON o.id = p.order_id
+		WHERE p.id = $1
+		AND o.user_id = $2
+		`
+
+	err := r.db.QueryRow(
+		ctx,
+		query,
+		paymentID,
+		userID,
+	).Scan(
+		&payment.ID,
+		&payment.OrderID,
+		&payment.PaymentMethod,
+		&payment.Amount,
+		&payment.Status,
+		&payment.TransactionReference,
+		&payment.PaidAt,
+		&payment.CreatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errors.New("payment tidak ditemukan")
+		}
+
+		return nil, err
+	}
+
+	return &payment, nil
 
 }

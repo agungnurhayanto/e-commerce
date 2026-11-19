@@ -81,3 +81,13 @@ func (s *Service) ConfirmDummyPayment(
 		ctx, paymentID, userID,
 	)
 }
+
+func (s *Service) GetPaymentDetail(
+	ctx context.Context,
+	paymentID uuid.UUID,
+	userID uuid.UUID,
+) (*dto.PaymentResponse, error) {
+	return s.repository.GetPaymentDetail(
+		ctx, paymentID, userID,
+	)
+}

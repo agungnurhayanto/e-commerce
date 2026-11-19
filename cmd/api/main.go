@@ -119,6 +119,7 @@ func main() {
 
 	router.POST("/payments", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.Create)
 	router.POST("/payments/:id/confirm", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.Confirm)
+	router.GET("/payments/:id", auth.AuthMiddleware(cfg.JWTSecret), paymentHandler.GetDetail)
 
 	// SERVER
 	log.Println("Server running on port", cfg.AppPort)

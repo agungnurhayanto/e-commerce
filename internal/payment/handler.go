@@ -91,3 +91,51 @@ func (h *Handler) Confirm(c *gin.Context) {
 		"message": "pembayaran berhasil di konfirmasi",
 	})
 }
+
+func (h *Handler) GetDetail(c *gin.Context) {
+	paymentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "payment ID tidak valid",
+		})
+
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("user_id"))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "user tidak valid",
+		})
+
+		return
+	}
+
+	payment, err := h.service.GetPaymentDetail(
+		c.Request.Context(),
+		paymentID,
+		userID,
+	)
+
+	if err != nil {
+
+		if err.Error() == "payment tidak ditemukan" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": err.Error(),
+			})
+
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "gagal mengambil detail payment",
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "berhasil mengambil detail payment",
+		"data":    payment,
+	})
+}
